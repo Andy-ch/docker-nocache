@@ -32,14 +32,14 @@ with open('.github/workflows/processed.json') as f:
 
 
 def process_tag(image, target_image, tag):
-    global processed_file_changed
+    global processed, processed_file_changed
     for arch in tag['images']:
         if image in processed and \
            tag['name'] in processed[image] and \
            arch['architecture'] in processed[image][tag['name']] and \
            processed[image][tag['name']][arch['architecture']] == arch['digest']:
             continue
-        print(tag['name'], arch['digest'])
+        print(tag['name'], arch['architecture'], arch['digest'])
         if image not in processed:
             processed[image] = {}
         if tag['name'] not in processed[image]:
