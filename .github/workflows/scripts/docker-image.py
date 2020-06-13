@@ -5,6 +5,7 @@ import sys
 import github3
 import requests
 import json
+import subprocess
 
 github = github3.login(token=os.environ['GH_PUSH_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
@@ -41,6 +42,9 @@ def process_tag(image, target_image, tag):
            processed[image][tag['name']][arch['architecture'] + arch['variant']] == arch['digest']:
             continue
         print(tag['name'], arch['architecture'] + arch['variant'], arch['digest'])
+        subprocess.Popen(f'''cd {image}
+docker build -t {target_image}:{tag['name']} --build-arg tag={tag['name']} .''',
+                         shell=True).communicate()
         if image not in processed:
             processed[image] = {}
         if tag['name'] not in processed[image]:
@@ -57,9 +61,6 @@ def process_image(image, target_image):
 
 def main():
     check_no_other_actions_running()
-#    if next(repository.commits()).message.find('[GH ACTION]') != -1:
-#        print('Latest commit was made by GH Action. Exiting')
-#        sys.exit()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
     if processed_file_changed:
