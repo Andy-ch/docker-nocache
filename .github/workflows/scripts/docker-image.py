@@ -6,6 +6,7 @@ import github3
 import requests
 import json
 import subprocess
+import multiprocessing
 
 github = github3.login(token=os.environ['GH_PUSH_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
@@ -32,8 +33,20 @@ with open('.github/workflows/processed.json') as f:
     processed = json.load(f)
 
 
+def push_image(image, target_image, tag, arch):
+    subprocess.Popen(f'''set -xe
+cd {image}
+docker build --platform {arch['architecture'] + arch['variant']} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .
+set +x
+echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
+set -x
+docker push {target_image}:{tag['name']}''',
+                     shell=True).communicate()
+
+
 def process_tag(image, target_image, tag):
     global processed, processed_file_changed
+    pool = multiprocessing.Pool(10)
     for arch in tag['images']:
         if arch['variant'] is None:
             arch['variant'] = ''
@@ -47,20 +60,14 @@ def process_tag(image, target_image, tag):
            processed[image][tag['name']][arch['architecture'] + arch['variant']] == arch['digest']:
             continue
         print(tag['name'], arch['architecture'] + arch['variant'], arch['digest'])
-        subprocess.Popen(f'''set -xe
-cd {image}
-docker build --platform {arch['architecture'] + arch['variant']} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .
-set +x
-echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
-set -x
-docker push {target_image}:{tag['name']}''',
-                         shell=True).communicate()
+        pool.apply_async(push_image, (image, target_image, tag, arch))
         if image not in processed:
             processed[image] = {}
         if tag['name'] not in processed[image]:
             processed[image][tag['name']] = {}
         processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
         processed_file_changed = True
+    pool.close()
 
 
 def process_image(image, target_image):
