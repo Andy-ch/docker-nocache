@@ -29,6 +29,7 @@ def get_data(api_link, result=[]):
 
 with open('.github/workflows/processed.json') as f:
     processed = json.load(f)
+print(processed)
 
 
 def process_tag(image, target_image, tag):
