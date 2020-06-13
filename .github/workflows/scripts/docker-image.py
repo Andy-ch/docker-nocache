@@ -37,13 +37,17 @@ def process_tag(image, target_image, tag):
     for arch in tag['images']:
         if arch['variant'] is None:
             arch['variant'] = ''
+        if arch['architecture'] + arch['variant'] == '386':
+            arch['architecture'] = 'i386'
+        elif arch['architecture'] + arch['variant'] in ['armv6', 'armv7']:
+            arch['architecture'] = 'arm32'
         if image in processed and \
            tag['name'] in processed[image] and \
            arch['architecture'] + arch['variant'] in processed[image][tag['name']] and \
            processed[image][tag['name']][arch['architecture'] + arch['variant']] == arch['digest']:
             continue
         print(tag['name'], arch['architecture'] + arch['variant'], arch['digest'])
-        subprocess.Popen(f'''set -e
+        subprocess.Popen(f'''set -xe
 cd {image}
 docker build -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .''',
                          shell=True).communicate()
