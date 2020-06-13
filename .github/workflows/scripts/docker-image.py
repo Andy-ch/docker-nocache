@@ -43,8 +43,9 @@ def process_tag(image, target_image, tag):
            processed[image][tag['name']][arch['architecture'] + arch['variant']] == arch['digest']:
             continue
         print(tag['name'], arch['architecture'] + arch['variant'], arch['digest'])
-        subprocess.Popen(f'''cd {image}
-docker build -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']}.''',
+        subprocess.Popen(f'''set -e
+cd {image}
+docker build -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .''',
                          shell=True).communicate()
         if image not in processed:
             processed[image] = {}
