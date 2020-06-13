@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import requests
 import json
 
@@ -8,7 +9,9 @@ import json
 def check_no_other_actions_running():
     res = requests.get(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/workflows/docker-image.yml/runs?status=in_progress',
                        headers={'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'})
-    print(res.json())
+    if res.json()['total_count'] > 1:
+        print('Another run of this action is in progress. Exiting')
+        sys.exit()
 
 
 def get_data(api_link, result=[]):
