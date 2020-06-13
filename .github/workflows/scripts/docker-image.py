@@ -62,7 +62,7 @@ def process_image(image, target_image):
 
 def main():
     check_no_other_actions_running()
-    process_image('library/alpine', 'Andy-ch/alpine-nocache')
+    process_image('library/alpine', 'andych/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
     if processed_file_changed:
         repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)
