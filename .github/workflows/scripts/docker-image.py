@@ -5,11 +5,10 @@ import sys
 import github3
 import requests
 import json
-import base64
-import hashlib
 
 github = github3.login(token=os.environ['GH_PUSH_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
+processed_file_changed = False
 
 
 def check_no_other_actions_running():
@@ -33,6 +32,7 @@ with open('.github/workflows/processed.json') as f:
 
 
 def process_tag(image, target_image, tag):
+    global processed_file_changed
     for arch in tag['images']:
         if image in processed and \
            tag['name'] in processed[image] and \
@@ -45,6 +45,7 @@ def process_tag(image, target_image, tag):
         if tag['name'] not in processed[image]:
             processed[image][tag['name']] = {}
         processed[image][tag['name']][arch['architecture']] = arch['digest']
+        processed_file_changed = True
 
 
 def process_image(image, target_image):
@@ -57,7 +58,8 @@ def main():
     check_no_other_actions_running()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
-    repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)
+    if processed_file_changed:
+        repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)
 
 if __name__ == '__main__':
     main()
