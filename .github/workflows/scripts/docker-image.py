@@ -53,7 +53,6 @@ def main():
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
     with open('.github/workflows/processed.json', 'w') as f:
         json.dump(processed, f, indent=2, sort_keys=True)
-    time.sleep(600)
 
 if __name__ == '__main__':
     main()
