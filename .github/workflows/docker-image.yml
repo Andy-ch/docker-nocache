@@ -1,18 +1,13 @@
 name: Publish images to Docker Hub
-
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
-    - name: Run Python script for processing Docker image
+    - name: Run Python script for processing Docker images
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python3 .github/workflows/scripts/docker-image.py

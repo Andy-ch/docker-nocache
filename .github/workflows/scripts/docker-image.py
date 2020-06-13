@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import json
+
+
+def check_no_other_actions_running():
+    res = requests.get(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/workflows/docker-image.yml/runs?status=in_progress',
+                       headers={'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'})
+    print(res.json())
 
 
 def get_data(api_link, result=[]):
@@ -38,6 +45,7 @@ def process_image(image, target_image):
 
 
 def main():
+    check_no_other_actions_running()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
     with open('.github/workflows/processed.json', 'w') as f:
         json.dump(processed, f, indent=2, sort_keys=True)
