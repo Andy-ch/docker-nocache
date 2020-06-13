@@ -57,9 +57,9 @@ def process_image(image, target_image):
 
 def main():
     check_no_other_actions_running()
-    if next(repository.commits()).message.find('[GH ACTION]') != -1:
-        print('Latest commit was made by GH Action. Exiting')
-        sys.exit()
+#    if next(repository.commits()).message.find('[GH ACTION]') != -1:
+#        print('Latest commit was made by GH Action. Exiting')
+#        sys.exit()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
     if processed_file_changed:
