@@ -2,9 +2,12 @@
 
 import os
 import sys
-import time
+import github3
 import requests
 import json
+
+github = github3.login(token=os.environ['GITHUB_TOKEN'])
+repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
 
 
 def check_no_other_actions_running():
@@ -51,8 +54,12 @@ def process_image(image, target_image):
 def main():
     check_no_other_actions_running()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
-    with open('.github/workflows/processed.json', 'w') as f:
-        json.dump(processed, f, indent=2, sort_keys=True)
+    processed_json = json.dumps(processed, f, indent=2, sort_keys=True)
+    processed_contents = repository.file_contents('/.github/workflows/processed.json', ref='master')
+    processed_contents.update('[GH ACTION] Update processed digests',
+                              processed_json.encode('utf-8'),
+                              branch='master')
+
 
 if __name__ == '__main__':
     main()

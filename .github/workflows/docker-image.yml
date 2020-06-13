@@ -2,6 +2,8 @@ name: Publish images to Docker Hub
 on:
   schedule:
     - cron: '0 * * * *'
+  push:
+    branches: [ master ]
 jobs:
   build:
     runs-on: ubuntu-latest
