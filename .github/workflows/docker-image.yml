@@ -12,4 +12,6 @@ jobs:
     - name: Run Python script for processing Docker images
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 .github/workflows/scripts/docker-image.py
+      run: |
+        pip3 install github3.py
+        python3 .github/workflows/scripts/docker-image.py
