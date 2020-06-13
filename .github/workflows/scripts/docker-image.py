@@ -5,6 +5,8 @@ import sys
 import github3
 import requests
 import json
+import base64
+import hashlib
 
 github = github3.login(token=os.environ['GITHUB_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
@@ -54,12 +56,14 @@ def process_image(image, target_image):
 def main():
     check_no_other_actions_running()
     process_image('library/alpine', 'Andy-ch/alpine-nocache')
-    processed_json = json.dumps(processed, indent=2, sort_keys=True)
-    processed_contents = repository.file_contents('.github/workflows/processed.json', ref='master')
-    processed_contents.update('[GH ACTION] Update processed digests',
-                              processed_json.encode('utf-8'),
-                              branch='master')
-
+    processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
+    res = requests.put(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/contents/.github/workflows/processed.json',
+                       headers={'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'},
+                       data={'message': '[GH ACTION] Update processed digests',
+                               'content': base64.b64encode(processed_json),
+                               'sha': hashlib.sha256(processed_json).hexdigest()})
+    if res.status_code != 200:
+        raise Exception(res.text)
 
 if __name__ == '__main__':
     main()
