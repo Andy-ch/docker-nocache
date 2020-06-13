@@ -51,7 +51,7 @@ def process_tag(image, target_image, tag):
 cd {image}
 docker build -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .
 set +x
-echo ${DOCKER_HUB_TOKEN}|docker login -u andych --password-stdin
+echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
 set -x
 docker push {target_image}:{tag['name']}''',
                          shell=True).communicate()
