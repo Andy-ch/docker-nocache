@@ -7,7 +7,7 @@ Don't take it too seriously :)
 Alpine: [![Alpine Docker puls](https://img.shields.io/docker/pulls/andych/alpine-nocache)](https://shields.io/)
 # Example
 
-    $ docker run -it --rm alpine-nocache sh
+    $ docker run -it --rm andych/alpine-nocache sh
     / # apk add python3
     fetch http://dl-cdn.alpinelinux.org/alpine/v3.12/main/x86_64/APKINDEX.tar.gz
     fetch http://dl-cdn.alpinelinux.org/alpine/v3.12/community/x86_64/APKINDEX.tar.gz
