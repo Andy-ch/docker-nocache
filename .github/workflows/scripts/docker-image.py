@@ -70,6 +70,7 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
 
 
 def test_tag(image, target_image, tag):
+    processes = []
     for arch in tag['images']:
         platform = 'linux/' + arch['architecture']
         if arch['variant']:
@@ -80,11 +81,13 @@ docker buildx build --platform {platform} -t {target_image}:{tag['name']} --buil
 cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
 docker build .
-cp Dockerfile.build Dockerfile
-''',
-                                   shell=True)
-        process.communicate()
-        if process.returncode != 0:
+cp Dockerfile.build Dockerfile''',
+                                   shell=True,
+                                   stdout=sys.stdout,
+                                   stderr=sys.stderr)
+        processes.append(process)
+    for process in processes:
+        if process.wait() != 0:
             sys.exit(process.returncode)
 
 
