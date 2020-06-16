@@ -57,6 +57,7 @@ def process_tag(image, target_image, tag):
             processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
             processed_file_changed = True
     if rebuild_required:
+        platforms = list(set(platforms))
         process = subprocess.Popen(f'''set -xe
 cd {image}
 set +x
