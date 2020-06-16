@@ -102,7 +102,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test', action='store_true')
     args = parser.parse_args()
-    check_no_other_actions_running()
+    if not args.test:
+        check_no_other_actions_running()
     process_image('library/alpine', 'andych/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
     if processed_file_changed and not args.test:
