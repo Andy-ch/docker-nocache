@@ -1,0 +1,4 @@
+ARG tag=latest
+FROM andych/alpine-nocache:${tag}
+RUN apk add curl && \
+    exit "$(ls /var/cache/apk/|wc -l)"

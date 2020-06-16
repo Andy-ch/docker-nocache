@@ -41,8 +41,7 @@ def process_tag(image, target_image, tag):
     for arch in tag['images']:
         if arch['variant'] is None:
             arch['variant'] = ''
-        if args.test or \
-           image not in processed or \
+        if image not in processed or \
            tag['name'] not in processed[image] or \
            arch['architecture'] + arch['variant'] not in processed[image][tag['name']] or \
            processed[image][tag['name']][arch['architecture'] + arch['variant']] != arch['digest']:
@@ -63,7 +62,26 @@ cd {image}
 set +x
 echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
 set -x
-docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --{'load' if args.test else 'push'} .''',
+docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --push .''',
+                                   shell=True)
+        process.communicate()
+        if process.returncode != 0:
+            sys.exit(process.returncode)
+
+
+def test_tag(image, target_image, tag):
+    for arch in tag['images']:
+        platform = 'linux/' + arch['architecture']
+        if arch['variant']:
+            platform += '/' + arch['variant']
+        process = subprocess.Popen(f'''set -xe
+cd {image}
+docker buildx build --platform {platform} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --load .
+cp Dockerfile Dockerfile.build
+cp Dockerfile.test Dockerfile
+docker build .
+cp Dockerfile.build Dockerfile
+''',
                                    shell=True)
         process.communicate()
         if process.returncode != 0:
@@ -73,7 +91,10 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
 def process_image(image, target_image):
     data = get_data(f'https://hub.docker.com/v2/repositories/{image}/tags')
     for result in data:
-        process_tag(image, target_image, result)
+        if args.test:
+            test_tag(image, target_image, result)
+        else:
+            process_tag(image, target_image, result)
 
 
 def main():
