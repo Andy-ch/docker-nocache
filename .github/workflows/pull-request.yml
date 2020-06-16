@@ -1,0 +1,28 @@
+name: Test changes in pull request
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run Python script for processing Docker images
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_PUSH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
+        DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      run: |
+        pip3 install github3.py
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        sudo python3 -c "import json
+        with open('/etc/docker/daemon.json') as f:
+            daemon = json.load(f)
+        daemon['experimental'] = True
+        with open('/etc/docker/daemon.json', 'w') as f:
+            json.dump(daemon, f)"
+        sudo systemctl restart docker
+        docker buildx create --name mybuilder
+        docker buildx use mybuilder
+        python3 .github/workflows/scripts/docker-image.py --dry-run

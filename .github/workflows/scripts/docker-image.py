@@ -41,7 +41,8 @@ def process_tag(image, target_image, tag):
     for arch in tag['images']:
         if arch['variant'] is None:
             arch['variant'] = ''
-        if image not in processed or \
+        if args.test or \
+           image not in processed or \
            tag['name'] not in processed[image] or \
            arch['architecture'] + arch['variant'] not in processed[image][tag['name']] or \
            processed[image][tag['name']][arch['architecture'] + arch['variant']] != arch['digest']:
@@ -62,7 +63,7 @@ cd {image}
 set +x
 echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
 set -x
-docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --{'load' if args.dry_run else 'push'} .''',
+docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --{'load' if args.test else 'push'} .''',
                                    shell=True)
         process.communicate()
         if process.returncode != 0:
@@ -78,12 +79,12 @@ def process_image(image, target_image):
 def main():
     global args
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('-t', '--test', action='store_true')
     args = parser.parse_args()
     check_no_other_actions_running()
     process_image('library/alpine', 'andych/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
-    if processed_file_changed and args.dry_run:
+    if processed_file_changed and not args.test:
         repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)
 
 if __name__ == '__main__':
