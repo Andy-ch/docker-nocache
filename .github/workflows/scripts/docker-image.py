@@ -6,10 +6,12 @@ import github3
 import requests
 import json
 import subprocess
+import argparse
 
 github = github3.login(token=os.environ['GH_PUSH_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
 processed_file_changed = False
+args = None
 
 
 def check_no_other_actions_running():
@@ -60,7 +62,7 @@ cd {image}
 set +x
 echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
 set -x
-docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --push .''',
+docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --{'load' if args.dry_run else 'push'} .''',
                                    shell=True)
         process.communicate()
         if process.returncode != 0:
@@ -74,10 +76,14 @@ def process_image(image, target_image):
 
 
 def main():
+    global args
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dry-run', action='store_true')
+    args = parser.parse_args()
     check_no_other_actions_running()
     process_image('library/alpine', 'andych/alpine-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
-    if processed_file_changed:
+    if processed_file_changed and args.dry_run:
         repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)
 
 if __name__ == '__main__':
