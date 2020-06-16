@@ -59,12 +59,11 @@ def process_tag(image, target_image, tag):
     if rebuild_required:
         process = subprocess.Popen(f'''set -xe
 cd {image}
-docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} .
 set +x
 echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
 set -x
-docker push {target_image}:{tag['name']}''',
-                         shell=True)
+docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --push .''',
+                                   shell=True)
         process.communicate()
         if process.returncode != 0:
             sys.exit(process.returncode)
