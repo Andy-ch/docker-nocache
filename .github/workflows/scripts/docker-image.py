@@ -6,7 +6,6 @@ import github3
 import requests
 import json
 import subprocess
-import multiprocessing
 
 github = github3.login(token=os.environ['GH_PUSH_TOKEN'])
 repository = github.repository(*os.environ['GITHUB_REPOSITORY'].split('/'))
@@ -38,13 +37,8 @@ def process_tag(image, target_image, tag):
     rebuild_required = False
     platforms = []
     for arch in tag['images']:
-        platforms.append(arch['architecture'])
         if arch['variant'] is None:
             arch['variant'] = ''
-        if arch['architecture'] + arch['variant'] == '386':
-            arch['architecture'] = 'i386'
-        elif arch['architecture'] + arch['variant'] in ['armv6', 'armv7']:
-            arch['architecture'] = 'arm32'
         if image not in processed or \
            tag['name'] not in processed[image] or \
            arch['architecture'] + arch['variant'] not in processed[image][tag['name']] or \
@@ -56,8 +50,10 @@ def process_tag(image, target_image, tag):
             rebuild_required = True
             processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
             processed_file_changed = True
+            platforms.append('linux/' + arch['architecture'])
+            if arch['variant']:
+                platforms[-1] += '/' + arch['variant']
     if rebuild_required:
-        platforms = list(set(platforms))
         process = subprocess.Popen(f'''set -xe
 cd {image}
 set +x
