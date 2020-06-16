@@ -25,4 +25,4 @@ jobs:
         sudo systemctl restart docker
         docker buildx create --name mybuilder
         docker buildx use mybuilder
-        python3 .github/workflows/scripts/docker-image.py --dry-run
+        python3 .github/workflows/scripts/docker-image.py --test
