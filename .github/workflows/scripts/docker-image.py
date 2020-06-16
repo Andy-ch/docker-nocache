@@ -77,10 +77,10 @@ def test_tag(image, target_image, tag):
             platform += '/' + arch['variant']
         process = subprocess.Popen(f'''set -xe
 cd {image}
-docker buildx build --platform {platform} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --load .
+docker buildx build --platform {platform} -t {target_image}:{tag['name']}-{platform} --build-arg tag={tag['name']} --load .
 cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
-docker build .
+docker build --build-arg tag={tag['name']}-{platform} .
 cp Dockerfile.build Dockerfile''',
                                    shell=True,
                                    stdout=sys.stdout,
