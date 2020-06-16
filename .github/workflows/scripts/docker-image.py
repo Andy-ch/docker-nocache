@@ -54,6 +54,7 @@ def process_tag(image, target_image, tag):
         if arch['variant']:
             platforms[-1] += '/' + arch['variant']
     if rebuild_required:
+        platforms = list(set(platforms))
         process = subprocess.Popen(f'''set -xe
 cd {image}
 set +x
