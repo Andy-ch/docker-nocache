@@ -38,6 +38,7 @@ def process_tag(image, target_image, tag):
     rebuild_required = False
     platforms = []
     for arch in tag['images']:
+        platforms.append(arch['architecture'])
         if arch['variant'] is None:
             arch['variant'] = ''
         if arch['architecture'] + arch['variant'] == '386':
@@ -55,7 +56,6 @@ def process_tag(image, target_image, tag):
             rebuild_required = True
             processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
             processed_file_changed = True
-        platforms.append(arch['architecture'] + arch['variant'])
     if rebuild_required:
         process = subprocess.Popen(f'''set -xe
 cd {image}
