@@ -33,20 +33,10 @@ with open('.github/workflows/processed.json') as f:
     processed = json.load(f)
 
 
-def push_image(image, target_image, tag, arch):
-    subprocess.Popen(f'''set -xe
-cd {image}
-docker build --platform {arch['architecture'] + arch['variant']} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --build-arg arch={arch['architecture'] + arch['variant']} .
-set +x
-echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
-set -x
-docker push {target_image}:{tag['name']}''',
-                     shell=True).communicate()
-
-
 def process_tag(image, target_image, tag):
     global processed, processed_file_changed
-    pool = multiprocessing.Pool(10)
+    rebuild_required = False
+    platforms = []
     for arch in tag['images']:
         if arch['variant'] is None:
             arch['variant'] = ''
@@ -54,20 +44,30 @@ def process_tag(image, target_image, tag):
             arch['architecture'] = 'i386'
         elif arch['architecture'] + arch['variant'] in ['armv6', 'armv7']:
             arch['architecture'] = 'arm32'
-        if image in processed and \
-           tag['name'] in processed[image] and \
-           arch['architecture'] + arch['variant'] in processed[image][tag['name']] and \
-           processed[image][tag['name']][arch['architecture'] + arch['variant']] == arch['digest']:
-            continue
-        print(tag['name'], arch['architecture'] + arch['variant'], arch['digest'])
-        pool.apply_async(push_image, (image, target_image, tag, arch))
-        if image not in processed:
-            processed[image] = {}
-        if tag['name'] not in processed[image]:
-            processed[image][tag['name']] = {}
-        processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
-        processed_file_changed = True
-    pool.close()
+        if image not in processed or \
+           tag['name'] not in processed[image] or \
+           arch['architecture'] + arch['variant'] not in processed[image][tag['name']] or \
+           processed[image][tag['name']][arch['architecture'] + arch['variant']] != arch['digest']:
+            if image not in processed:
+                processed[image] = {}
+            if tag['name'] not in processed[image]:
+                processed[image][tag['name']] = {}
+            rebuild_required = True
+            processed[image][tag['name']][arch['architecture'] + arch['variant']] = arch['digest']
+            processed_file_changed = True
+        platforms.append(arch['architecture'] + arch['variant'])
+    if rebuild_required:
+        process = subprocess.Popen(f'''set -xe
+cd {image}
+docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} .
+set +x
+echo {os.environ['DOCKER_HUB_TOKEN']}|docker login -u andych --password-stdin
+set -x
+docker push {target_image}:{tag['name']}''',
+                         shell=True)
+        process.communicate()
+        if process.returncode != 0:
+            sys.exit(process.returncode)
 
 
 def process_image(image, target_image):

@@ -24,4 +24,6 @@ jobs:
         with open('/etc/docker/daemon.json', 'w') as f:
             json.dump(daemon, f)"
         sudo systemctl restart docker
+        docker buildx create --name mybuilder
+        docker buildx use mybuilder
         python3 .github/workflows/scripts/docker-image.py
