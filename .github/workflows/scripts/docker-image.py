@@ -36,6 +36,8 @@ with open('.github/workflows/processed.json') as f:
 
 def process_tag(image, target_image, tag):
     global processed, processed_file_changed
+    if args.test:
+        processed = {}
     rebuild_required = False
     platforms = []
     for arch in tag['images']:
@@ -70,25 +72,21 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
 
 
 def test_tag(image, target_image, tag):
-    processes = []
+    process_tag(image, f'localhost:5000/{target_image}', tag)
+    platforms = []
     for arch in tag['images']:
         platform = 'linux/' + arch['architecture']
         if arch['variant']:
             platform += '/' + arch['variant']
-        process = subprocess.Popen(f'''set -xe
+        platforms.append(platform)
+    process = subprocess.Popen(f'''set -xe
 cd {image}
-docker buildx build --platform {platform} -t {target_image}:{tag['name']}-{platform} --build-arg tag={tag['name']} --load .
-cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
-docker build --build-arg tag={tag['name']}-{platform} .
-cp Dockerfile.build Dockerfile''',
-                                   shell=True,
-                                   stdout=sys.stdout,
-                                   stderr=sys.stderr)
-        processes.append(process)
-    for process in processes:
-        if process.wait() != 0:
-            sys.exit(process.returncode)
+docker buildx build --platform {platform} --build-arg tag={tag['name']} .''',
+                               shell=True)
+    process.communicate()
+    if process.returncode != 0:
+        sys.exit(process.returncode)
 
 
 def process_image(image, target_image):
