@@ -16,15 +16,20 @@ jobs:
       run: |
         pip3 install github3.py
         docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        docker run -d --restart always --name registry registry
+        export registry_ip=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry)
+        until curl -f ${registry_ip}:5000/v2/; do sleep 1; done
+        echo "${registry_ip}" > /tmp/registry_ip.txt
         sudo python3 -c "import json
         with open('/etc/docker/daemon.json') as f:
             daemon = json.load(f)
+        with open('/tmp/registry_ip.txt') as f:
+            registry_ip = f.read().replace('\n', '')
         daemon['experimental'] = True
+        daemon['insecure-registries'] = [registry_ip + ':5000']
         with open('/etc/docker/daemon.json', 'w') as f:
             json.dump(daemon, f)"
         sudo systemctl restart docker
         docker buildx create --name mybuilder
         docker buildx use mybuilder
-        docker run -d -p 5000:5000 --restart always registry
-        until curl -f localhost:5000/v2/; do sleep 1; done
         python3 .github/workflows/scripts/docker-image.py --test

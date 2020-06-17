@@ -1,4 +1,5 @@
 ARG tag=latest
-FROM localhost:5000/andych/alpine-nocache:${tag}
+ARG registry_ip=127.0.0.1
+FROM ${registry_ip}:5000/andych/alpine-nocache:${tag}
 RUN apk add curl && \
     exit "$(ls /var/cache/apk/|wc -l)"
