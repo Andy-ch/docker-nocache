@@ -26,4 +26,5 @@ jobs:
         docker buildx create --name mybuilder
         docker buildx use mybuilder
         docker run -d -p 5000:5000 --restart always registry
+        until curl -f localhost:5000/v2/; do sleep 1; done
         python3 .github/workflows/scripts/docker-image.py --test
