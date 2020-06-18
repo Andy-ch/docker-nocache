@@ -26,10 +26,11 @@ jobs:
         with open('/tmp/registry_ip.txt') as f:
             registry_ip = f.read().replace('\n', '')
         daemon['experimental'] = True
-        daemon['insecure-registries'] = [registry_ip + ':5000']
         with open('/etc/docker/daemon.json', 'w') as f:
-            json.dump(daemon, f)"
+            json.dump(daemon, f)
+        with open('/tmp/buildkitd.toml', 'w') as f:
+            f.write(f'insecure-entitlements = [ "{registry_ip}:5000" ]')"
         sudo systemctl restart docker
-        docker buildx create --name mybuilder
-        docker buildx use mybuilder
+        docker buildx create --name mybuilder --config /tmp/buildkitd.toml --use
+        cat /etc/buildkit/buildkitd.toml
         python3 .github/workflows/scripts/docker-image.py --test
