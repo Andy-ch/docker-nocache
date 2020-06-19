@@ -20,7 +20,7 @@ jobs:
         export registry_ip=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry)
         until curl -f ${registry_ip}:5000/v2/; do sleep 1; done
         echo "${registry_ip}" > /tmp/registry_ip.txt
-        sudo python3 -c "import json
+        sudo python3 -c "import json, jinja2
         with open('/etc/docker/daemon.json') as f:
             daemon = json.load(f)
         with open('/tmp/registry_ip.txt') as f:
@@ -28,9 +28,12 @@ jobs:
         daemon['experimental'] = True
         with open('/etc/docker/daemon.json', 'w') as f:
             json.dump(daemon, f)
+        template_loader = jinja2.FileSystemLoader(searchpath='.github/workflows/')
+        template_env = jinja2.Environment(loader=template_loader)
+        template = template_env.get_template('buildkitd.toml.j2')
+        buildx_config = template.render(registry_ip=registry_ip)
         with open('/tmp/buildkitd.toml', 'w') as f:
-            f.write(f'insecure-entitlements = [ "{registry_ip}:5000" ]')"
+            f.write(buildx_config)"
         sudo systemctl restart docker
         docker buildx create --name mybuilder --config /tmp/buildkitd.toml --use
-        cat /etc/buildkit/buildkitd.toml
         python3 .github/workflows/scripts/docker-image.py --test
