@@ -16,24 +16,14 @@ jobs:
       run: |
         pip3 install github3.py
         docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-        docker run -d --restart always --name registry registry
-        export registry_ip=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry)
-        until curl -f ${registry_ip}:5000/v2/; do sleep 1; done
-        echo "${registry_ip}" > /tmp/registry_ip.txt
-        sudo python3 -c "import json, jinja2
+        docker run -d --restart always -p 5000:5000 --name registry registry
+        until curl -f localhost:5000/v2/; do sleep 1; done
+        sudo python3 -c "import json
         with open('/etc/docker/daemon.json') as f:
             daemon = json.load(f)
-        with open('/tmp/registry_ip.txt') as f:
-            registry_ip = f.read().replace('\n', '')
         daemon['experimental'] = True
         with open('/etc/docker/daemon.json', 'w') as f:
-            json.dump(daemon, f)
-        template_loader = jinja2.FileSystemLoader(searchpath='.github/workflows/')
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template('buildkitd.toml.j2')
-        buildx_config = template.render(registry_ip=registry_ip)
-        with open('/tmp/buildkitd.toml', 'w') as f:
-            f.write(buildx_config)"
+            json.dump(daemon, f)"
         sudo systemctl restart docker
-        docker buildx create --name mybuilder --config /tmp/buildkitd.toml --use
+        docker buildx create --name mybuilder --use --driver-opt network=host
         python3 .github/workflows/scripts/docker-image.py --test

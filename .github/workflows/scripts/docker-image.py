@@ -72,7 +72,7 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
 
 
 def test_tag(image, target_image, tag):
-    process_tag(image, f'{os.environ["registry_ip"]}:5000/{target_image}', tag)
+    process_tag(image, f'localhost:5000/{target_image}', tag)
     platforms = []
     for arch in tag['images']:
         platform = 'linux/' + arch['architecture']
@@ -82,7 +82,7 @@ def test_tag(image, target_image, tag):
     process = subprocess.Popen(f'''set -xe
 cd {image}
 cp Dockerfile.test Dockerfile
-docker buildx build --platform {platform} --build-arg registry_ip={os.environ['registry_ip']} --build-arg tag={tag['name']} .''',
+docker buildx build --platform {platform} --build-arg tag={tag['name']} .''',
                                shell=True)
     process.communicate()
     if process.returncode != 0:
