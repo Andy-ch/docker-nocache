@@ -71,7 +71,10 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
             sys.exit(process.returncode)
 
 
-def test_tag(image, target_image, tag):
+def test_tag(image, target_image, tag, attempt=0):
+    if attempt >= 5:
+        print('No more attempts to try')
+        sys.exit(1)
     process_tag(image, f'localhost:5000/{target_image}', tag)
     platforms = []
     for arch in tag['images']:
@@ -88,7 +91,8 @@ cp Dockerfile.build Dockerfile''',
                                shell=True)
     process.communicate()
     if process.returncode != 0:
-        sys.exit(process.returncode)
+        print(f'Attempt {attempt} failed, launching another')
+        test_tag(image, target_image, tag, attempt + 1)
 
 
 def process_image(image, target_image):
