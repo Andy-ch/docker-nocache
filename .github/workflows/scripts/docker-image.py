@@ -34,7 +34,7 @@ with open('.github/workflows/processed.json') as f:
     processed = json.load(f)
 
 
-def process_tag(image, target_image, tag):
+def process_tag(image, target_image, tag, fail_on_errors=True):
     global processed, processed_file_changed
     if args.test:
         processed = {}
@@ -67,7 +67,7 @@ set -x
 docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['name']} --build-arg tag={tag['name']} --push .''',
                                    shell=True)
         process.communicate()
-        if process.returncode != 0:
+        if process.returncode != 0 and fail_on_errors:
             sys.exit(process.returncode)
 
 
@@ -75,7 +75,7 @@ def test_tag(image, target_image, tag, attempt=0):
     if attempt >= 5:
         print('No more attempts to try')
         sys.exit(1)
-    process_tag(image, f'localhost:5000/{target_image}', tag)
+    process_tag(image, f'localhost:5000/{target_image}', tag, False)
     platforms = []
     for arch in tag['images']:
         platform = 'linux/' + arch['architecture']
