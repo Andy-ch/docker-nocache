@@ -1,6 +1,7 @@
 #!/bin/sh
 set -x
-if apk --no-cache list
+mv /sbin/apk /sbin/apk-original
+if apk --no-cache list &>/dev/null
 then
   mv /sbin/apk-nocache /sbin/apk
   rm /sbin/apk-delcache
