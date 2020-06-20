@@ -81,9 +81,10 @@ def test_tag(image, target_image, tag):
         platforms.append(platform)
     process = subprocess.Popen(f'''set -xe
 cd {image}
+cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
 docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name']} .
-docker exec registry sh -c 'rm -rf /var/lib/registry/docker/registry/v2/repositories/*' ''',
+cp Dockerfile.build Dockerfile''',
                                shell=True)
     process.communicate()
     if process.returncode != 0:
