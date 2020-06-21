@@ -75,7 +75,9 @@ def test_tag(image, target_image, tag, attempt=0):
     if attempt >= 5:
         print('No more attempts to try')
         sys.exit(1)
-    process = subprocess.Popen('''set -xe
+    process = subprocess.Popen('''set -x
+docker stop registry
+set -e
 docker run -d --rm -p 5000:5000 --name registry registry
 until curl -f localhost:5000/v2/; do sleep 1; done''',
                                shell=True)
@@ -99,7 +101,6 @@ docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name'
 cp Dockerfile.build Dockerfile''',
                                shell=True)
     process.communicate()
-    subprocess.Popen('docker stop registry', shell=True).communicate()
     if process.returncode != 0:
         print(f'Attempt {attempt} failed, launching another')
         test_tag(image, target_image, tag, attempt + 1)
