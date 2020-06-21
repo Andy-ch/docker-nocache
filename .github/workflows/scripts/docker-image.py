@@ -72,41 +72,34 @@ docker buildx build --platform {','.join(platforms)} -t {target_image}:{tag['nam
 
 
 def test_tag(image, target_image, tag, attempt=0):
-    print("""if attempt >= 5:""")
     if attempt >= 5:
-        print("""print('No more attempts to try')""")
         print('No more attempts to try')
-        print("""sys.exit(1)""")
         sys.exit(1)
-    print("""process_tag(image, f'localhost:5000/{target_image}', tag, False)""")
+    process = subprocess.Popen('''set -xe
+docker run -d --restart always -p 5000:5000 --name registry registry
+until curl -f localhost:5000/v2/; do sleep 1; done''',
+                               shell=True)
+    process.communicate()
+    if process.returncode != 0:
+        sys.exit(process.returncode)
     process_tag(image, f'localhost:5000/{target_image}', tag, False)
-    print("""platforms = []""")
     platforms = []
-    print("""for arch in tag['images']:""")
     for arch in tag['images']:
-        print("""platform = 'linux/' + arch['architecture']""")
         platform = 'linux/' + arch['architecture']
-        print("""if arch['variant']:""")
         if arch['variant']:
-            print("""platform += '/' + arch['variant']""")
             platform += '/' + arch['variant']
-        print("""platforms.append(platform)""")
         platforms.append(platform)
-    print("""process = subprocess.Popen(f'''set -xe""")
     process = subprocess.Popen(f'''set -xe
 cd {image}
 cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
 docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name']} .
-cp Dockerfile.build Dockerfile''',
+cp Dockerfile.build Dockerfile
+docker stop registry''',
                                shell=True)
-    print("""process.communicate()""")
     process.communicate()
-    print("""if process.returncode != 0:""")
     if process.returncode != 0:
-        print("""print(f'Attempt {attempt} failed, launching another')""")
         print(f'Attempt {attempt} failed, launching another')
-        print("""test_tag(image, target_image, tag, attempt + 1)""")
         test_tag(image, target_image, tag, attempt + 1)
 
 

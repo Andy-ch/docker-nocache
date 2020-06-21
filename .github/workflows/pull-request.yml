@@ -16,8 +16,6 @@ jobs:
       run: |
         pip3 install github3.py
         docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-        docker run -d --restart always -p 5000:5000 --name registry registry
-        until curl -f localhost:5000/v2/; do sleep 1; done
         sudo python3 -c "import json
         with open('/etc/docker/daemon.json') as f:
             daemon = json.load(f)
