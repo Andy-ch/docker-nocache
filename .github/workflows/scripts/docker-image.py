@@ -89,6 +89,8 @@ until curl -f localhost:5000/v2/; do sleep 1; done''',
         if arch['variant']:
             platform += '/' + arch['variant']
         platforms.append(platform)
+    if not platforms:
+        return
     process = subprocess.Popen(f'''set -xe
 cd {image}
 cp Dockerfile Dockerfile.build
