@@ -94,10 +94,10 @@ cd {image}
 cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
 docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name']} .
-cp Dockerfile.build Dockerfile
-docker stop registry''',
+cp Dockerfile.build Dockerfile''',
                                shell=True)
     process.communicate()
+    subprocess.Popen('docker stop registry', shell=True).communicate()
     if process.returncode != 0:
         print(f'Attempt {attempt} failed, launching another')
         test_tag(image, target_image, tag, attempt + 1)
