@@ -1,4 +1,4 @@
 ARG tag=latest
 FROM alpine:${tag}
-RUN mv /sbin/apk /sbin/apk-original
-COPY apk /sbin/
+COPY apk* /sbin/
+RUN /sbin/apk-executable-chooser.sh
