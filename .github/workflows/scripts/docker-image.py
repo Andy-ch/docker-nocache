@@ -76,7 +76,7 @@ def test_tag(image, target_image, tag, attempt=0):
         print('No more attempts to try')
         sys.exit(1)
     process = subprocess.Popen('''set -xe
-docker run -d --restart always -p 5000:5000 --name registry registry
+docker run -d --rm -p 5000:5000 --name registry registry
 until curl -f localhost:5000/v2/; do sleep 1; done''',
                                shell=True)
     process.communicate()
