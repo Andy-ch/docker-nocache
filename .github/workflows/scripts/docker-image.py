@@ -110,6 +110,7 @@ def process_image(image, target_image):
     data = get_data(f'https://hub.docker.com/v2/repositories/{image}/tags')
     for result in data:
         if args.test:
+            target_image = target_image.split('/')[-1]
             test_tag(image, target_image, result)
         else:
             process_tag(image, target_image, result)

@@ -1,5 +1,5 @@
 ARG tag=latest
-FROM localhost:5000/andych/alpine-nocache:${tag}
+FROM localhost:5000/alpine-nocache:${tag}
 RUN apk update && \
     apk add curl && \
     exit "$(ls /var/cache/apk/|wc -l)"
