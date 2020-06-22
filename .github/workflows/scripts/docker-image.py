@@ -97,10 +97,10 @@ until curl -f localhost:5000/v2/; do sleep 1; done''',
 cd {image}
 cp Dockerfile Dockerfile.build
 cp Dockerfile.test Dockerfile
-docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name']} .
-cp Dockerfile.build Dockerfile''',
+docker buildx build --platform {','.join(platforms)} --build-arg tag={tag['name']} .''',
                                shell=True)
     process.communicate()
+    subprocess.Popen('cp Dockerfile.build Dockerfile', shell=True).communicate()
     if process.returncode != 0:
         print(f'Attempt {attempt} failed, launching another')
         test_tag(image, target_image, tag, attempt + 1)
