@@ -124,6 +124,7 @@ def main():
     if not args.test:
         check_no_other_actions_running()
     process_image('library/alpine', 'andych/alpine-nocache')
+    process_image('library/ubuntu', 'andych/ubuntu-nocache')
     processed_json = json.dumps(processed, indent=2, sort_keys=True).encode('utf-8')
     if processed_file_changed and not args.test:
         repository.file_contents('/.github/workflows/processed.json').update('[GH ACTION] Update processed digests', processed_json)

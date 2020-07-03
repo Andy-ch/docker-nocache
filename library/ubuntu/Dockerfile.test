@@ -1,0 +1,5 @@
+ARG tag=latest
+FROM localhost:5000/ubuntu-nocache:${tag}
+RUN apt update && \
+    apt install -y curl && \
+    exit "$(ls /var/cache/apt/|wc -l)"
